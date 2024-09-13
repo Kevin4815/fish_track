@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "908186922366",
+    "project_id": "fish-track-6e054",
+    "storage_bucket": "fish-track-6e054.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:908186922366:android:e61cdaf18749a39662d72f",
+        "android_client_info": {
+          "package_name": "com.example.fish_track"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_hKIJWQWfQyCtIVTr2Qig0D5RTWUoh5A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
