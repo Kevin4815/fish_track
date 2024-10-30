@@ -1,23 +1,19 @@
-import 'package:fish_track/main_app_page.dart';
-import 'package:fish_track/navigationbar.dart';
+import 'package:fish_track/firebase.dart';
 import 'package:fish_track/sign_up_page.dart';
-import 'package:fish_track/toast.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class SignInPage extends StatefulWidget {
+  const SignInPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<SignInPage> createState() => _MySignInPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MySignInPageState extends State<SignInPage> {
 
   final TextEditingController _login = TextEditingController();
   final TextEditingController _password = TextEditingController();
@@ -79,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     const SizedBox(height: 16), // Espacement entre les champs et le bouton
                     ElevatedButton(
                       onPressed: () {
-                        firebaseLogin(_login, _password, context);
+                        FirebaseManager.firebaseLogin(_login, _password, context);
                       },
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
@@ -111,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 // Action pour rediriger vers la page d'inscription
                                 Navigator.push(    
                                   context,
-                                  MaterialPageRoute(builder: (context) => const SignUp(title: "S'inscrire")),
+                                  MaterialPageRoute(builder: (context) => const SignUpPage(title: "S'inscrire")),
                                 );
                               },
                           ),
@@ -129,33 +125,4 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-Future<void> firebaseLogin(login, password, context) async {
-  try {
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: login.text,
-      password: password.text
-    );
 
-    User? user = userCredential.user;
-    var uid = user?.uid ?? ''; 
-    
-    Navigator.push(    
-      context,
-      MaterialPageRoute(builder: (context) => BottomNavigationBarExampleApp(userId : uid)),
-    );
-
-  } on FirebaseAuthException catch (e) {
-    print(e.code);
-    if (e.code == 'invalid-credential') {
-      print("Erreur d'email ou de mot de passe");
-      MessageToast.displayToast("Erreur d'email ou de mot de passe");
-    } else if (e.code == 'channel-error') {
-      print('Problème avec le mot de passe');
-      MessageToast.displayToast("Email et mot de passe obligatoire");
-    } else if (e.code == 'invalid-email') {
-      MessageToast.displayToast("Adresse email invalide");
-      print('Adresse email invalide');
-      
-    }
-  }
-}
