@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:fish_track/app_bar.dart';
 import 'package:fish_track/fish.dart';
-import 'package:fish_track/main_app_page.dart';
+import 'package:fish_track/location_service.dart';
 import 'package:fish_track/navigationbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:location/location.dart';
 
 const List<String> fish_list = <String>['Black-bass', 'Chevesne', 'Brochet', 'Carpe', 'Silure'];
 const List<String> fishing_rod_type = <String>['Ultra-light', 'Light', 'Medium-light', 'Medium', 'Medium-heavy', 'Heavy'];
@@ -25,11 +26,26 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   String? dropdownRodValue; // Définir sur null pour afficher "Sélectionnez une option"
   File? _imgFile;
   final TextEditingController _inputSizeValueController = TextEditingController();
+  final LocationService _locationService = LocationService();
+  LocationData? _position;
+
+  @override
+  void initState() {
+    super.initState();
+    currentPosition();
+  }
 
   @override
   void dispose() {
     _inputSizeValueController.dispose();
     super.dispose();
+  }
+
+  Future<void> currentPosition() async {
+       LocationData? position = await _locationService.getCurrentPosition();
+    setState(() {
+      _position = position; // Met à jour la position dans l'état
+    });
   }
 
   void takeSnapshot() async {
@@ -228,16 +244,30 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   }
 
   Future<void> saveFish(String userId) async {
+  
+
     CollectionReference fishes = FirebaseFirestore.instance.collection('Fish');
     Fish fish = Fish(dropdownFishValue ?? "Non spécifié", _inputSizeValueController.text, dropdownRodValue ?? "Non spécifié", _imgFile?.path ?? "");
     try {
+      // Créer une Map pour la position
+      Map<String, double>? positionMap;
+      if (_position != null) {
+        positionMap = {
+          'latitude': _position!.latitude!,
+          'longitude': _position!.longitude!,
+        };
+      }
+
+      // Ajout dans Firestore
       await fishes.doc(userId).collection('user_fish').add({
         'type': fish.type,
         'size': fish.size,
         'rod_type': fish.rodType,
         'picture': fish.picture,
         'timestamp': Timestamp.now(),
+        'position': positionMap, // Utiliser le Map pour la position
       });
+
       homeRedirection(context, userId);
     } catch (error) {
       print("Failed to add fish: $error");

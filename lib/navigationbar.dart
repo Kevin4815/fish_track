@@ -1,5 +1,6 @@
 import 'package:fish_track/add_fishing_page.dart';
 import 'package:fish_track/main_app_page.dart';
+import 'package:fish_track/map.dart';
 import 'package:fish_track/messages_pages.dart';
 import 'package:flutter/material.dart';
 
@@ -39,7 +40,7 @@ class _BottomNavigationBarExampleState
     _widgetOptions = <Widget>[
       MainAppPage(title: "Home", userId: widget.userId,),
       AddFishingPage(title: "Fishing", userId: widget.userId),
-      const MessagesPage(title: "Messages"),
+      MyMapPage(title: "Map")
     ];
   }
 
@@ -66,8 +67,8 @@ class _BottomNavigationBarExampleState
             label: 'Ajouter',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.message),
-            label: 'Messages',
+            icon: Icon(Icons.map),
+            label: 'Carte',
           ),
         ],
         currentIndex: _selectedIndex,

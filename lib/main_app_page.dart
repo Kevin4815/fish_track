@@ -174,7 +174,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
         List<Map<String, dynamic>> fishDataList = querySnapshot.docs
             .map((doc) {
               final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-              final Map<String, dynamic>? nullableData = data;
+              final Map<String, dynamic> nullableData = data;
               final Map<String, dynamic> nonNullableData = nullableData ?? {}; // Si nullableData est null, utilisez un objet vide
               return {
                 ...nonNullableData, // Utiliser l'opérateur spread avec nonNullableData
@@ -185,18 +185,18 @@ class _MyMainAppPageState extends State<MainAppPage> {
             .toList();
 
         // Afficher le contenu de la liste fishDataList
-        print('Contenu de la liste fishDataList :');
+        //print('Contenu de la liste fishDataList :');
         for (int i = 0; i < fishDataList.length; i++) {
-          print('Élément $i : ${fishDataList[i]}');
+          //print('Élément $i : ${fishDataList[i]}');
         }
 
         return fishDataList;
       } else {
-        print('No user signed in.');
+        //print('No user signed in.');
         return [];
       }
     } catch (error) {
-      print('Failed to get fish data: $error');
+      //print('Failed to get fish data: $error');
       return [];
     }
   }

@@ -1,5 +1,5 @@
+import 'package:fish_track/auth_wrapper.dart';
 import 'package:fish_track/firebase_options.dart';
-import 'package:fish_track/sign_in_page.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
@@ -12,18 +12,15 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,  // Enlever le bandeau de débogage
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SignInPage(title: 'Home Page'),
-      //home: const BottomNavigationBarExampleApp(userId: "blJtn5Bchsash4FRl5jj7B4mwHg2"),
+      home: AuthWrapper(),
     );
   }
 }
-
