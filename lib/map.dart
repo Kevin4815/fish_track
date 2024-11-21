@@ -1,36 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fish_track/app_bar.dart';
 import 'package:fish_track/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-// Assurez-vous d'avoir défini votre CustomAppBar quelque part
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final VoidCallback onLogoutPressed;
-
-  const CustomAppBar({Key? key, required this.title, required this.onLogoutPressed})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(title),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: onLogoutPressed,
-        ),
-      ],
-    );
-  }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(56.0); // Hauteur par défaut de l'AppBar
-}
 
 class MyMapPage extends StatefulWidget {
   MyMapPage({super.key, required this.title});
@@ -112,11 +88,8 @@ class _MyMapPagePageState extends State<MyMapPage> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: 'Mes spots',
-        onLogoutPressed: () {
-          // Action de déconnexion ici
-        },
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _fishesPositionsList,

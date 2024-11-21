@@ -38,7 +38,7 @@ class _BottomNavigationBarExampleState
   void initState() {
     super.initState();
     _widgetOptions = <Widget>[
-      MainAppPage(title: "Home", userId: widget.userId,),
+      MainAppPage(title: "Mes captures", userId: widget.userId,),
       AddFishingPage(title: "Fishing", userId: widget.userId),
       MyMapPage(title: "Map")
     ];

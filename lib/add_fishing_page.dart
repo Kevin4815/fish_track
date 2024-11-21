@@ -4,12 +4,13 @@ import 'package:fish_track/fish.dart';
 import 'package:fish_track/location_service.dart';
 import 'package:fish_track/navigationbar.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:location/location.dart';
 
-const List<String> fish_list = <String>['Black-bass', 'Chevesne', 'Brochet', 'Carpe', 'Silure'];
-const List<String> fishing_rod_type = <String>['Ultra-light', 'Light', 'Medium-light', 'Medium', 'Medium-heavy', 'Heavy'];
+const List<String> fishList = <String>['Black-bass', 'Chevesne', 'Brochet', 'Carpe', 'Silure'];
+const List<String> fishingRodType = <String>['Ultra-light', 'Light', 'Medium-light', 'Medium', 'Medium-heavy', 'Heavy'];
 
 class AddFishingPage extends StatefulWidget {
   const AddFishingPage({super.key, required this.title, required this.userId});
@@ -42,10 +43,25 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   }
 
   Future<void> currentPosition() async {
-       LocationData? position = await _locationService.getCurrentPosition();
-    setState(() {
-      _position = position; // Met à jour la position dans l'état
-    });
+    LocationData? position = await _locationService.getCurrentPosition();
+    if (mounted) {
+      setState(() {
+        _position = position;
+      });
+    }
+  }
+
+  Future<String> getCityName(double latitude, double longitude) async {
+    // Effectue une géocodification inversée
+    List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+    // Récupère le nom de la ville
+    if (placemarks.isNotEmpty) {
+      Placemark placemark = placemarks[0];
+      return placemark.locality ?? 'Ville non trouvée';
+    } else {
+      return 'Ville non trouvée';
+    }
   }
 
   void takeSnapshot() async {
@@ -63,112 +79,92 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Ajouter une pêche',
-        onLogoutPressed: () {
-          // Action de déconnexion ici
-        },
+      appBar: const CustomAppBar(
+        title: 'Mes pêches',
       ),
       body: Stack(
         children: [
-          // Fond d'image
+          // Background
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("images/river.jpg"),
+                image: AssetImage("images/river.jpg"), // Image de fond
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // Voile noir
+          // Semi-transparent overlay
           Container(
             color: Colors.black.withOpacity(0.4),
           ),
-          // Contenu principal
+          // Main UI
           SingleChildScrollView(
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Header title
                     const Text(
-                      "Type de poisson",
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                      "Ajoute ton poisson !",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(blurRadius: 8, color: Colors.black, offset: Offset(2, 2))
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 20),
+                    // Fish Type Dropdown
+                    _buildLabel("Type de poisson"),
                     _buildDropdownField(
                       dropdownValue: dropdownFishValue,
-                      items: fish_list,
+                      items: fishList,
                       onChanged: (value) => setState(() => dropdownFishValue = value),
                     ),
                     const SizedBox(height: 15),
-                    const Text(
-                      "Taille (cm)",
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
+                    // Size Input
+                    _buildLabel("Taille (cm)"),
                     _buildTextField(
                       controller: _inputSizeValueController,
                       hintText: 'Entrez la taille en cm',
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 15),
-                    const Text(
-                      "Type de canne",
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
+                    // Rod Type Dropdown
+                    _buildLabel("Type de canne"),
                     _buildDropdownField(
                       dropdownValue: dropdownRodValue,
-                      items: fishing_rod_type,
+                      items: fishingRodType,
                       onChanged: (value) => setState(() => dropdownRodValue = value),
                     ),
-                    const SizedBox(height: 25),
-                    Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            width: 180,
-                            height: 180,
-                            color: Colors.white.withOpacity(0.1),
-                            child: _imgFile == null
-                                ? Image.asset('images/empty_image.jpg', fit: BoxFit.cover)
-                                : Image.file(_imgFile!, fit: BoxFit.cover),
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        ElevatedButton(
-                          onPressed: takeSnapshot,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(211, 37, 115, 160),
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            "Ajouter une photo",
-                            style: TextStyle(color: Color.fromARGB(221, 255, 255, 255), fontSize: 18),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 20),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        color: Colors.white.withOpacity(0.3),
+                        child: _imgFile == null
+                            ? Image.asset('images/no_photo.jpg', fit: BoxFit.cover)
+                            : Image.file(_imgFile!, fit: BoxFit.cover),
+                      ),
                     ),
-                    const SizedBox(height: 25),
-                    ElevatedButton(
-                      onPressed: () => saveFish(widget.userId),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(211, 37, 115, 160),
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        "Sauvegarder",
-                        style: TextStyle(color: Color.fromARGB(221, 255, 255, 255), fontSize: 18),
-                      ),
+                    const SizedBox(height: 15),
+                    _buildButton(
+                      text: "Ajouter une photo",
+                      onPressed: takeSnapshot,
+                    ),
+                    const SizedBox(height: 20),
+                    // Save button
+                    _buildButton(
+                      text: "Sauvegarder",
+                      onPressed: () {
+                        saveFish(widget.userId);
+                      },
                     ),
                   ],
                 ),
@@ -180,42 +176,44 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
     );
   }
 
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+        shadows: [Shadow(blurRadius: 3, color: Colors.black, offset: Offset(0, 1))],
+      ),
+    );
+  }
+
   Widget _buildDropdownField({
-    required String? dropdownValue, // Changement pour String? (nullable)
+    required String? dropdownValue,
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
-    // Ajout d'une valeur par défaut au début de la liste d'options
     List<String> dropdownItems = ["Sélectionnez une option", ...items];
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5)],
       ),
       child: DropdownButtonFormField<String>(
         decoration: const InputDecoration(border: InputBorder.none),
-        // Pas de valeur initiale pour afficher "Sélectionnez une option"
         value: dropdownValue,
         items: dropdownItems.map((String value) {
           return DropdownMenuItem<String>(
-            value: value == "Sélectionnez une option" ? null : value, // "Sélectionnez une option" pointe vers null
+            value: value == "Sélectionnez une option" ? null : value,
             child: Text(
               value,
               style: TextStyle(color: value == "Sélectionnez une option" ? Colors.grey : Colors.black),
             ),
           );
         }).toList(),
-        onChanged: (String? newValue) {
-          // Ignorer l'option par défaut
-          if (newValue != null) {
-            onChanged(newValue);
-          }
-        },
-        // Validation pour forcer la sélection d'une option
-        validator: (value) => value == null ? 'Veuillez choisir une option valide' : null,
+        onChanged: onChanged,
       ),
     );
   }
@@ -226,10 +224,10 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
     TextInputType? keyboardType,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5)],
       ),
       child: TextFormField(
@@ -237,42 +235,82 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
+          hintStyle: const TextStyle(color: Colors.grey),
         ),
         keyboardType: keyboardType,
       ),
     );
   }
 
-  Future<void> saveFish(String userId) async {
-  
-
-    CollectionReference fishes = FirebaseFirestore.instance.collection('Fish');
-    Fish fish = Fish(dropdownFishValue ?? "Non spécifié", _inputSizeValueController.text, dropdownRodValue ?? "Non spécifié", _imgFile?.path ?? "");
-    try {
-      // Créer une Map pour la position
-      Map<String, double>? positionMap;
-      if (_position != null) {
-        positionMap = {
-          'latitude': _position!.latitude!,
-          'longitude': _position!.longitude!,
-        };
-      }
-
-      // Ajout dans Firestore
-      await fishes.doc(userId).collection('user_fish').add({
-        'type': fish.type,
-        'size': fish.size,
-        'rod_type': fish.rodType,
-        'picture': fish.picture,
-        'timestamp': Timestamp.now(),
-        'position': positionMap, // Utiliser le Map pour la position
-      });
-
-      homeRedirection(context, userId);
-    } catch (error) {
-      print("Failed to add fish: $error");
-    }
+  Widget _buildButton({required String text, required VoidCallback onPressed}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF28A2C8),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+    );
   }
+
+Future<void> saveFish(String userId) async {
+  CollectionReference fishes = FirebaseFirestore.instance.collection('Fish');
+
+  // Assurez-vous que les valeurs par défaut sont définies pour éviter les erreurs
+  String fishType = dropdownFishValue ?? "Non spécifié";
+  String fishSize = _inputSizeValueController.text.isNotEmpty ? _inputSizeValueController.text : "Non spécifié";
+  String rodType = dropdownRodValue ?? "Non spécifié";
+  String picturePath = _imgFile?.path ?? "";
+
+  Fish fish = Fish(fishType, fishSize, rodType, picturePath);
+
+  try {
+    if (_position == null) {
+      print("Position is null");
+      return;
+    }
+
+    String cityName = '';
+    try {
+      cityName = await getCityName(_position!.latitude!, _position!.longitude!);
+      print("City name: $cityName");
+    } catch (error) {
+      print("Error in getCityName: $error");
+      cityName = 'Non renseigné';
+    }
+
+    // Créer une Map pour la position
+    Map<String, dynamic>? positionMap;
+    if (_position != null) {
+      positionMap = {
+        'city' : cityName,
+        'latitude': _position!.latitude!,
+        'longitude': _position!.longitude!,
+      };
+    }
+
+    // Ajout dans Firestore
+    await fishes.doc(userId).collection('user_fish').add({
+      'type': fish.type,
+      'size': fish.size,
+      'rod_type': fish.rodType,
+      'picture': fish.picture,
+      'timestamp': Timestamp.now(),
+      'position': positionMap, // Utiliser le Map pour la position
+    });
+
+    homeRedirection(context, userId);
+  } catch (error) {
+    print("Failed to add fish: $error");
+  }
+}
+
 
   void homeRedirection(BuildContext context, String id) {
     Navigator.push(

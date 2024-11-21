@@ -3,29 +3,30 @@ import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final VoidCallback onLogoutPressed;
 
-  const CustomAppBar({
-    required this.title,
-    required this.onLogoutPressed,
-    Key? key,
-  }) : super(key: key);
+  const CustomAppBar({Key? key, required this.title})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      automaticallyImplyLeading: false,
-      title: Text(title),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white, // Ajustez la couleur de texte
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: const Color(0xFF28A2C8), // Ajustez la couleur et transparence de l'AppBar
       actions: [
         IconButton(
-          onPressed: () async {
-            await FirebaseManager.signOut(context);
-          },
-          icon: const Icon(Icons.logout),
+          icon: const Icon(Icons.logout, color: Colors.white), // Ajustez l'icône et sa couleur
+          onPressed: () => FirebaseManager.signOut(context),  // Passez la méthode signOut correctement
         ),
       ],
     );
   }
+
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(56.0);
 }
