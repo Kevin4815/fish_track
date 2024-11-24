@@ -50,7 +50,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
           ),
           // Contenu principal
           Center(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
+            child: FutureBuilder<List<Map<String, dynamic>>>(  // FutureBuilder pour récupérer les données
               future: _fishData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -73,11 +73,13 @@ class _MyMainAppPageState extends State<MainAppPage> {
                     itemBuilder: (context, index) {
                       final fishData = fishList[index];
                       return GestureDetector(
-                        onTap: () => {
-                          Navigator.push(
+                        onTap: () async {
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => FishInformations(
+                                userId: fishData['userId'],
+                                docId: fishData['docId'],
                                 title: "Informations",
                                 city: fishData.containsKey('position') && fishData['position']?.containsKey('city') == true
                                     ? fishData['position']['city']
@@ -99,7 +101,14 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                     : Timestamp.fromDate(DateTime.now()),
                               ),
                             ),
-                          ),
+                          );
+
+                          // Si le résultat est true, on recharge les données
+                          if (result == true) {
+                            setState(() {
+                              _fishData = getFishData(); // Rafraîchir les données
+                            });
+                          }
                         },
                         child: Dismissible(
                           key: Key(fishData['id'].toString()),
@@ -113,10 +122,16 @@ class _MyMainAppPageState extends State<MainAppPage> {
                             return false;
                           },
                           background: Container(
-                            color: Colors.red,
+                            color: Colors.blue,  // Couleur de fond pour les paramètres
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: const Icon(Icons.settings, color: Colors.white),  // Icône des paramètres
+                          ),
+                          secondaryBackground: Container(
+                            color: Colors.red,  // Couleur de fond pour la suppression
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: const Icon(Icons.delete, color: Colors.white),
+                            child: const Icon(Icons.delete, color: Colors.white),  // Icône de suppression
                           ),
                           child: Container(
                             padding: const EdgeInsets.all(10.0),
@@ -140,15 +155,15 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                   child: SizedBox(
                                     width: 80,
                                     height: 80,
-                                   child: fishData['picture'] != null && fishData['picture'].isNotEmpty
-                                    ? Image.file(
-                                        File(fishData['picture']),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.asset(
-                                        'images/no_photo.jpg',
-                                        fit: BoxFit.cover,
-                                      ),
+                                    child: fishData['picture'] != null && fishData['picture'].isNotEmpty
+                                      ? Image.file(
+                                          File(fishData['picture']),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.asset(
+                                          'images/no_photo.jpg',
+                                          fit: BoxFit.cover,
+                                        ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -228,7 +243,8 @@ class _MyMainAppPageState extends State<MainAppPage> {
           return {
             ...data,
             'name': userDataSnapshot['name'],
-            'id': doc.id,
+            'userId': userId,
+            'docId': doc.id,
           };
         }).toList();
 
