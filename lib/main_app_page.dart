@@ -99,6 +99,14 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                 date: fishData.containsKey('timestamp') && fishData['timestamp'] != null
                                     ? fishData['timestamp'] as Timestamp
                                     : Timestamp.fromDate(DateTime.now()),
+                               fishPosition: fishData.containsKey('position') &&
+                                      fishData['position']?.containsKey('latitude') == true &&
+                                      fishData['position']?.containsKey('longitude') == true
+                                  ? {
+                                      'latitude': fishData['position']['latitude'],
+                                      'longitude': fishData['position']['longitude']
+                                    }
+                                  : {'error': 'Inconnue'}, 
                               ),
                             ),
                           );

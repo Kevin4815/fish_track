@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fish_track/app_bar.dart';
 import 'package:fish_track/location_service.dart';
+import 'package:fish_track/map_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -23,17 +24,20 @@ class _MyMapPagePageState extends State<MyMapPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   LocationData? _position;
 
+  late MapLocation mapLocation;
+
   @override
   void initState() {
     super.initState();
+    mapLocation = MapLocation(); // Initialiser mapLocation
     _fishesPositionsList = fishesList();
-    currentPosition(); // Obtenez la position actuelle
-  }
 
-  Future<void> currentPosition() async {
-    // Cette méthode devrait être définie pour récupérer la position actuelle de l'utilisateur
-    _position = await _locationService.getCurrentPosition();
-    setState(() {}); // Mettre à jour l'état pour re-render le widget
+     // Récupère la position actuelle
+    mapLocation.currentPosition((position) {
+        setState(() {
+          _position = position;
+        });
+      });
   }
 
   Future<List<Map<String, dynamic>>> fishesList() async {
@@ -121,7 +125,7 @@ class _MyMapPagePageState extends State<MyMapPage> {
                   ],
                 ),
                 MarkerLayer(
-                  markers: _buildMarkers(fishesPositionList), // Appeler la méthode pour générer les marqueurs
+                  markers: mapLocation.buildMarkers(fishesPositionList), // Appeler la méthode pour générer les marqueurs
                 ),
               ],
             );
@@ -131,23 +135,4 @@ class _MyMapPagePageState extends State<MyMapPage> {
     );
   }
 
-  List<Marker> _buildMarkers(List<Map<String, dynamic>> fishesPositionList) {
-    return fishesPositionList.map((fish) {
-      final position = fish['position'];
-      if (position != null) {
-        return Marker(
-          point: LatLng(position['latitude'], position['longitude']),
-          width: 80,
-          height: 80,
-          child: const Icon(
-            Icons.location_pin,
-            color: Colors.red, // Couleur de l'épingle
-            size: 40, // Taille de l'épingle
-          ),
-        );
-      } else {
-        return null; // Retourner null si la position n'est pas valide
-      }
-    }).where((marker) => marker != null).cast<Marker>().toList(); // Filtrer les marqueurs null
-  }
 }

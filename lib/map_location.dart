@@ -8,9 +8,14 @@ class MapLocation {
   final LocationService _locationService = LocationService();
   LocationData? _position;
 
-  Future<void> currentPosition() async {
-    // Cette méthode récupère la position actuelle de l'utilisateur
-    _position = await _locationService.getCurrentPosition();
+  Future<void> currentPosition(Function(LocationData?) onPositionUpdated) async {
+    LocationData? position = await _locationService.getCurrentPosition();
+    onPositionUpdated(position);
+  }
+
+
+  Future<dynamic> getCurrentFishPosition(Map<String, dynamic> fish) async {
+    return fish['position'];
   }
 
   // Getter pour obtenir LatLng à partir de la position
@@ -44,13 +49,15 @@ class MapLocation {
   }
 
   List<Marker> _buildMarkerForFish(Map<String, dynamic> fish) {
-    final position = fish['position'];
-    
-    if (position != null) {
-      // Créer un marqueur avec la position
+    final latitude = fish['latitude'];
+    final longitude = fish['longitude'];
+
+    // Vérifier si la latitude et la longitude existent (ne sont pas null)
+    if (latitude != null && longitude != null) {
+      // Si la latitude et la longitude sont valides, créer le marqueur
       return [
         Marker(
-          point: LatLng(position['latitude'], position['longitude']),  // Utilisation de LatLng de latlong2
+          point: LatLng(latitude, longitude),  // Utilisation de LatLng de latlong2
           width: 80,
           height: 80,
           child: const Icon(
@@ -61,8 +68,11 @@ class MapLocation {
         ),
       ];
     }
-    return [];  // Retourner une liste vide si la position est invalide
+
+    // Si la latitude ou la longitude est null, ne pas retourner de marqueur
+    return [];  // Liste vide, pas de marqueur
   }
+
 
 
 
