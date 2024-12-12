@@ -29,29 +29,24 @@ android {
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_16 // Spécifiez Java 16 ici
+        targetCompatibility JavaVersion.VERSION_1_16 // Spécifiez Java 16 ici
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '16' // Assurez-vous que Kotlin utilise également Java 16
     }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.example.fish_track"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 33  // Vous pouvez ajuster cette version selon vos besoins
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
     }
+
 
     buildTypes {
         release {

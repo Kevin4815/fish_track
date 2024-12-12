@@ -13,11 +13,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(
         title,
         style: const TextStyle(
-          color: Colors.white, // Ajustez la couleur de texte
+          fontSize: 26,
           fontWeight: FontWeight.bold,
+          color: Colors.white,
+          shadows: [
+            Shadow(blurRadius: 8, color: Colors.black, offset: Offset(2, 2))
+          ],
         ),
       ),
-      backgroundColor: const Color(0xFF28A2C8), // Ajustez la couleur et transparence de l'AppBar
+      backgroundColor: const Color(0xFF2C3A41), // Ajustez la couleur et transparence de l'AppBar
       actions: [
         IconButton(
           icon: const Icon(Icons.logout, color: Colors.white), // Ajustez l'icône et sa couleur

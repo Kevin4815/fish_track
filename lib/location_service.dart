@@ -35,6 +35,9 @@ class LocationService {
     _position = await location.getLocation();
     _isLoading = false; // Fin du chargement après avoir obtenu la position
 
+    print("oeoeoeoeo");
+    print(_position);
+
     return _position; // Retourne la position
   }
 

@@ -45,5 +45,16 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Nous avons besoin de votre localisation pour...</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Nous avons besoin de votre localisation en permanence pour...</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Cette application nécessite l'accès à votre caméra pour prendre des photos ou des vidéos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nous avons besoin de votre permission pour accéder à votre bibliothèque de photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Nous avons besoin de votre permission pour ajouter des photos à votre bibliothèque.</string>
+
 </dict>
 </plist>

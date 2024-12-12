@@ -8,6 +8,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:location/location.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 const List<String> fishList = <String>['Black-bass', 'Chevesne', 'Brochet', 'Carpe', 'Silure'];
 const List<String> fishingRodType = <String>['Ultra-light', 'Light', 'Medium-light', 'Medium', 'Medium-heavy', 'Heavy'];
@@ -23,8 +25,8 @@ class AddFishingPage extends StatefulWidget {
 }
 
 class _MyAddFishingPageState extends State<AddFishingPage> {
-  String? dropdownFishValue; // Définir sur null pour afficher "Sélectionnez une option"
-  String? dropdownRodValue; // Définir sur null pour afficher "Sélectionnez une option"
+  String? dropdownFishValue;
+  String? dropdownRodValue;
   File? _imgFile;
   final TextEditingController _inputSizeValueController = TextEditingController();
   final LocationService _locationService = LocationService();
@@ -44,6 +46,7 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
 
   Future<void> currentPosition() async {
     LocationData? position = await _locationService.getCurrentPosition();
+    print(position);
     if (mounted) {
       setState(() {
         _position = position;
@@ -52,10 +55,7 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   }
 
   Future<String> getCityName(double latitude, double longitude) async {
-    // Effectue une géocodification inversée
     List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
-
-    // Récupère le nom de la ville
     if (placemarks.isNotEmpty) {
       Placemark placemark = placemarks[0];
       return placemark.locality ?? 'Ville non trouvée';
@@ -64,23 +64,77 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
     }
   }
 
-  void takeSnapshot() async {
+  void takeSnapshot(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
+
+    // Affiche un dialogue avec deux options : appareil photo ou galerie
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text('Choisissez une option'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Prendre une photo'),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text('Choisir dans la galerie'),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Si l'utilisateur annule la boîte de dialogue
+    if (source == null) return;
+
+    // Récupère l'image depuis la source sélectionnée
     final XFile? img = await picker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       maxWidth: 400,
     );
     if (img == null) return;
+
+    // Enregistrez l'image dans un répertoire persistant
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final String appDocPath = appDocDir.path;
+    final String fileName = img.name;
+    final File newImage = File('$appDocPath/$fileName');
+    await img.saveTo(newImage.path);
+
+    // Mettez à jour l'état avec l'image sélectionnée
     setState(() {
-      _imgFile = File(img.path);
+      _imgFile = newImage;
     });
+  }
+
+
+  Future<String> uploadImageToFirebase(File image) async {
+    try {
+      FirebaseStorage storage = FirebaseStorage.instance;
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference ref = storage.ref().child('images/$fileName');
+      UploadTask uploadTask = ref.putFile(image);
+      TaskSnapshot snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print("Erreur lors du téléchargement de l'image : $e");
+      return '';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
-        title: 'Mes pêches',
+        title: 'Ajout de pêches',
       ),
       body: Stack(
         children: [
@@ -88,7 +142,7 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("images/river.jpg"), // Image de fond
+                image: AssetImage("images/peche-background-sun.jpg"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -101,24 +155,10 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
           SingleChildScrollView(
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Header title
-                    const Text(
-                      "Ajoute ton poisson !",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(blurRadius: 8, color: Colors.black, offset: Offset(2, 2))
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Fish Type Dropdown
                     _buildLabel("Type de poisson"),
                     _buildDropdownField(
                       dropdownValue: dropdownFishValue,
@@ -126,7 +166,6 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
                       onChanged: (value) => setState(() => dropdownFishValue = value),
                     ),
                     const SizedBox(height: 15),
-                    // Size Input
                     _buildLabel("Taille (cm)"),
                     _buildTextField(
                       controller: _inputSizeValueController,
@@ -134,14 +173,13 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 15),
-                    // Rod Type Dropdown
                     _buildLabel("Type de canne"),
                     _buildDropdownField(
                       dropdownValue: dropdownRodValue,
                       items: fishingRodType,
                       onChanged: (value) => setState(() => dropdownRodValue = value),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 50),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(15),
                       child: Container(
@@ -153,16 +191,17 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
                             : Image.file(_imgFile!, fit: BoxFit.cover),
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 25),
                     _buildButton(
                       text: "Ajouter une photo",
-                      onPressed: takeSnapshot,
+                      onPressed: () {
+                         takeSnapshot(context);
+                      },
                     ),
                     const SizedBox(height: 20),
-                    // Save button
                     _buildButton(
                       text: "Sauvegarder",
-                      onPressed: () {
+                      onPressed: () async {
                         saveFish(widget.userId);
                       },
                     ),
@@ -246,7 +285,7 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF28A2C8),
+        backgroundColor: const Color.fromARGB(255, 69, 177, 173),
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
@@ -259,58 +298,69 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
     );
   }
 
-Future<void> saveFish(String userId) async {
-  CollectionReference fishes = FirebaseFirestore.instance.collection('Fish');
+  Future<void> saveFish(String userId) async {
+    CollectionReference fishes = FirebaseFirestore.instance.collection('Fish');
 
-  // Assurez-vous que les valeurs par défaut sont définies pour éviter les erreurs
-  String fishType = dropdownFishValue ?? "Non spécifié";
-  String fishSize = _inputSizeValueController.text.isNotEmpty ? _inputSizeValueController.text : "Non spécifié";
-  String rodType = dropdownRodValue ?? "Non spécifié";
-  String picturePath = _imgFile?.path ?? "";
+    String fishType = dropdownFishValue ?? "Non spécifié";
+    String fishSize = _inputSizeValueController.text.isNotEmpty ? _inputSizeValueController.text : "Non spécifié";
+    String rodType = dropdownRodValue ?? "Non spécifié";
+    String picturePath = _imgFile?.path ?? "";
 
-  Fish fish = Fish(fishType, fishSize, rodType, picturePath);
+    Fish fish = Fish(fishType, fishSize, rodType, picturePath);
 
-  try {
-    if (_position == null) {
-      print("Position is null");
-      return;
-    }
-
-    String cityName = '';
     try {
-      cityName = await getCityName(_position!.latitude!, _position!.longitude!);
-      print("City name: $cityName");
+      String cityName = '';
+      try {
+        cityName = await getCityName(_position!.latitude!, _position!.longitude!);
+        print("City name: $cityName");
+      } catch (error) {
+        print("Error in getCityName: $error");
+        cityName = 'Non renseigné';
+      }
+
+      Map<String, dynamic>? positionMap;
+      if (_position != null) {
+        positionMap = {
+          'city': cityName,
+          'latitude': _position!.latitude!,
+          'longitude': _position!.longitude!,
+        };
+      }
+
+      DocumentReference userDoc = fishes.doc(userId);
+      DocumentSnapshot docSnapshot = await userDoc.get();
+
+      if (!docSnapshot.exists) {
+        await userDoc.set({
+          'userId': userId,
+          'createdAt': Timestamp.now(),
+        });
+        print("Document utilisateur créé");
+      }
+
+      // Upload image to Firebase Storage and get the URL
+      String imageUrl = '';
+      if (_imgFile != null) {
+        imageUrl = await uploadImageToFirebase(_imgFile!);
+      }
+
+      await userDoc.collection('user_fish').add({
+        'type': fish.type,
+        'size': fish.size,
+        'rod_type': fish.rodType,
+        'picture': imageUrl.isNotEmpty ? imageUrl : fish.picture,
+        // PATH PHOTO VIDE POUR EVITER LES ERREURS DE RÉCUPÉRATION (PHOTO DISPARAIT DU STOCKAGE IPHONE)
+        //'picture': "",
+        'timestamp': Timestamp.now(),
+        'position': positionMap,
+      });
+
+      print("Poisson ajouté avec succès");
+      homeRedirection(context, userId);
     } catch (error) {
-      print("Error in getCityName: $error");
-      cityName = 'Non renseigné';
+      print("Failed to add fish: $error");
     }
-
-    // Créer une Map pour la position
-    Map<String, dynamic>? positionMap;
-    if (_position != null) {
-      positionMap = {
-        'city' : cityName,
-        'latitude': _position!.latitude!,
-        'longitude': _position!.longitude!,
-      };
-    }
-
-    // Ajout dans Firestore
-    await fishes.doc(userId).collection('user_fish').add({
-      'type': fish.type,
-      'size': fish.size,
-      'rod_type': fish.rodType,
-      'picture': fish.picture,
-      'timestamp': Timestamp.now(),
-      'position': positionMap, // Utiliser le Map pour la position
-    });
-
-    homeRedirection(context, userId);
-  } catch (error) {
-    print("Failed to add fish: $error");
   }
-}
-
 
   void homeRedirection(BuildContext context, String id) {
     Navigator.push(

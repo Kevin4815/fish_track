@@ -39,7 +39,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("images/river.jpg"),
+                image: AssetImage("images/peche-background-sun.jpg"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -119,13 +119,13 @@ class _MyMainAppPageState extends State<MainAppPage> {
                           }
                         },
                         child: Dismissible(
-                          key: Key(fishData['id'].toString()),
+                          key: Key(fishData['docId'].toString()),
                           direction: DismissDirection.endToStart,
                           resizeDuration: const Duration(milliseconds: 200),
                           confirmDismiss: (direction) async {
                             if (direction == DismissDirection.endToStart) {
                               return await _showDeleteConfirmationDialog(
-                                  context, fishData['id'].toString());
+                                  context, fishData['docId'].toString());
                             }
                             return false;
                           },
@@ -180,10 +180,10 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      _buildInfoRow("Pêcheur", fishData['name']),
-                                      _buildInfoRow("Type", fishData['type']),
-                                      _buildInfoRow("Taille", "${fishData['size']} cm"),
-                                      _buildInfoRow("Canne", fishData['rod_type']),
+                                      _buildInfoRow("Type", (fishData['type'] == null || fishData['type'].isEmpty) ? 'Inconnu' : fishData['type']),
+                                      _buildInfoRow("Taille", (fishData['size'] == null || fishData['size'].isEmpty) ? 'Inconnu' : fishData['size']),
+                                      _buildInfoRow("Canne", (fishData['rod_type'] == null || fishData['rod_type'].isEmpty) ? 'Inconnu' : fishData['rod_type']),
+                                      _buildInfoRow("Lieu", (fishData['position']['city'] == null || fishData['position']['city'].isEmpty) ? 'Inconnu' : fishData['position']['city']),
                                     ],
                                   ),
                                 ),
@@ -291,6 +291,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
                           .collection("user_fish")
                           .doc(cardId)
                           .delete();
+                          print(cardId);
                       Navigator.of(context).pop(true);
                     } catch (error) {
                       Navigator.of(context).pop(false);
@@ -303,4 +304,5 @@ class _MyMainAppPageState extends State<MainAppPage> {
         ) ??
         false;
   }
+  
 }

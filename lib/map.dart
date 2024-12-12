@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fish_track/app_bar.dart';
-import 'package:fish_track/location_service.dart';
 import 'package:fish_track/map_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -20,7 +19,6 @@ class MyMapPage extends StatefulWidget {
 
 class _MyMapPagePageState extends State<MyMapPage> {
   late Future<List<Map<String, dynamic>>> _fishesPositionsList;
-  final LocationService _locationService = LocationService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   LocationData? _position;
 
@@ -34,10 +32,13 @@ class _MyMapPagePageState extends State<MyMapPage> {
 
      // Récupère la position actuelle
     mapLocation.currentPosition((position) {
+      if(mounted){
         setState(() {
           _position = position;
+          print(_position);
         });
-      });
+      }
+    });
   }
 
   Future<List<Map<String, dynamic>>> fishesList() async {
@@ -86,53 +87,57 @@ class _MyMapPagePageState extends State<MyMapPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Vérifier si la position est nulle et attendre le chargement
-    if (_position == null) {
-      return const Center(child: CircularProgressIndicator()); // Affiche un indicateur de chargement
-    }
-
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'Mes spots',
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fishesPositionsList,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator()); // Affiche un indicateur de chargement
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erreur: ${snapshot.error}')); // Affiche l'erreur si elle se produit
-          } else {
-            // Si tout est correct, récupérer les données
-            List<Map<String, dynamic>> fishesPositionList = snapshot.data!;
+      body: Builder(
+        builder: (context) {
+          // Si la position est nulle, afficher un indicateur de chargement en attendant qu'elle soit récupérée
+          if (_position == null) {
+            return const Center(child: CircularProgressIndicator()); // Affiche un indicateur de chargement pendant que la position est récupérée
+          }
 
-            return FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(_position!.latitude!, _position!.longitude!), // Centre sur la position actuelle
-                initialZoom: 9.2,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.app',
-                ),
-                RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution(
-                      'OpenStreetMap contributors',
-                      onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
+          return FutureBuilder<List<Map<String, dynamic>>>(
+            future: _fishesPositionsList,
+            builder: (context, snapshot) {
+              // Si la récupération des poissons prend du temps, afficher un indicateur de chargement
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Erreur: ${snapshot.error}'));
+              } else {
+                // Si tout est chargé, afficher la carte
+                List<Map<String, dynamic>> fishesPositionList = snapshot.data!;
+
+                return FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(_position!.latitude!, _position!.longitude!),
+                    initialZoom: 9.2,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution(
+                          'OpenStreetMap contributors',
+                          onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
+                        ),
+                      ],
+                    ),
+                    MarkerLayer(
+                      markers: mapLocation.buildMarkers(fishesPositionList),
                     ),
                   ],
-                ),
-                MarkerLayer(
-                  markers: mapLocation.buildMarkers(fishesPositionList), // Appeler la méthode pour générer les marqueurs
-                ),
-              ],
-            );
-          }
+                );
+              }
+            },
+          );
         },
       ),
     );
   }
-
 }

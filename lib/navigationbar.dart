@@ -50,31 +50,34 @@ class _BottomNavigationBarExampleState
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Ajouter',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Carte',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Color.fromARGB(255, 8, 164, 255),
-        onTap: _onItemTapped,
-      ),
-    );
-  }
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Center(
+      child: _widgetOptions.elementAt(_selectedIndex),
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home, color: Colors.white),
+          label: 'Accueil',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.add, color: Colors.white),
+          label: 'Ajouter',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map, color: Colors.white),
+          label: 'Carte',
+        ),
+      ],
+      backgroundColor: const Color(0xFF2C3A41),
+      currentIndex: _selectedIndex,
+      selectedItemColor: const Color.fromARGB(255, 255, 255, 255), // Couleur pour l'élément sélectionné
+      unselectedItemColor: const Color.fromARGB(255, 255, 255, 255), // Couleur pour les éléments non sélectionnés
+      onTap: _onItemTapped,
+    ),
+  );
+}
+
 }
