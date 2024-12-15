@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fish_track/gps.dart';
-import 'package:fish_track/location_service.dart';
 import 'package:fish_track/map_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -25,6 +24,7 @@ class FishInformations extends StatefulWidget {
     required this.rod,
     required this.date,
     required this.fishPosition,
+    required this.isDarkMode
   });
 
   final String userId;
@@ -37,6 +37,7 @@ class FishInformations extends StatefulWidget {
   final String rod;
   final Timestamp date;
   final Map<String, dynamic> fishPosition;
+  final bool isDarkMode;
 
   @override
   State<FishInformations> createState() => _MyFishInformationsState();
@@ -49,7 +50,6 @@ class _MyFishInformationsState extends State<FishInformations> {
   late String editableRod;
 
   Map<String, dynamic>? _fishPosition;
-  final LocationService _locationService = LocationService();
   final GPS _gps = GPS();
 
   bool isModified = false;
@@ -100,17 +100,17 @@ class _MyFishInformationsState extends State<FishInformations> {
     return Scaffold(
       backgroundColor: const Color(0xFF2C3A41),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2C3A41),
-        title: const Text('Informations', style: TextStyle(
+        backgroundColor: widget.isDarkMode ? const Color(0xFF2C3A41) : const Color.fromARGB(255, 255, 255, 255),
+        title: Text('Informations', style: TextStyle(
           fontSize: 26,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
-          shadows: [
-            Shadow(blurRadius: 8, color: Colors.black, offset: Offset(2, 2))
+          color: widget.isDarkMode ? Colors.white :  const Color(0xFF424242),
+          shadows: const [
+            Shadow(blurRadius: 4, color: Colors.black),
           ],
         ),),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: widget.isDarkMode ? Colors.white : Colors.black),
           onPressed: () {
             Navigator.pop(context, isModified ? true : false);
           },
@@ -128,7 +128,7 @@ class _MyFishInformationsState extends State<FishInformations> {
           ),
           // Semi-transparent overlay
           Container(
-            color: Colors.black.withOpacity(0.6),
+           color: widget.isDarkMode ? Colors.black.withOpacity(0.4) : Colors.white.withOpacity(0.0)
           ),
           Center(
             child: SingleChildScrollView(
@@ -248,8 +248,11 @@ class _MyFishInformationsState extends State<FishInformations> {
                               initialZoom: 9.2,
                             ),
                             children: [
-                              TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                               TileLayer(
+                                urlTemplate: widget.isDarkMode
+                                    ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+                                    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                subdomains: ['a', 'b', 'c'],
                                 userAgentPackageName: 'com.example.app',
                               ),
                               MarkerLayer(
@@ -267,8 +270,8 @@ class _MyFishInformationsState extends State<FishInformations> {
                           ),
                       ),
                       Container(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF2C3A41),
+                        decoration: BoxDecoration(
+                          color: widget.isDarkMode ? const Color(0xFF2C3A41) : const Color.fromARGB(255, 255, 255, 255),
                         ),
                         child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -333,7 +336,7 @@ class _MyFishInformationsState extends State<FishInformations> {
           }
         },
         child: Card(
-          color: const Color.fromARGB(255, 65, 83, 93),
+          color: widget.isDarkMode ? const Color(0xFF2C3A41) : const Color.fromARGB(255, 255, 255, 255),
           elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -346,10 +349,10 @@ class _MyFishInformationsState extends State<FishInformations> {
                 // Affiche le label (type, taille canne, etc.)
                 Text(
                   '$label :',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white,
+                    color: widget.isDarkMode ? Colors.white : Colors.black
                   ),
                 ),
                 Row(
@@ -378,7 +381,7 @@ class _MyFishInformationsState extends State<FishInformations> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), // Padding uniforme pour tous les éléments
                       decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 69, 177, 173),
+                        color: widget.isDarkMode ? const Color.fromARGB(255, 48, 128, 125) : const Color.fromARGB(255, 69, 177, 173),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -409,26 +412,26 @@ void showCustomAlertDialog(BuildContext context, TextEditingController controlle
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        backgroundColor: const Color(0xFF2C3A41),
+        backgroundColor: widget.isDarkMode ? const Color(0xFF2C3A41) : const Color.fromARGB(255, 255, 255, 255) ,
         title: Text(
           label, 
-          style: const TextStyle(color: Colors.white)),
+          style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
         content: TextField(
           controller: dynamicController,
-          style: const TextStyle(color: Colors.white), // Change la couleur du texte tapé
+          style:  TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black), // Change la couleur du texte tapé
           decoration: InputDecoration(
             filled: true, // Active le fond rempli
-            fillColor: const Color.fromARGB(255, 91, 91, 91), // Change la couleur de fond de l'input
+            fillColor: widget.isDarkMode ? const Color.fromARGB(255, 91, 91, 91) : const Color.fromARGB(255, 192, 192, 192), // Change la couleur de fond de l'input
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder( // Contour lorsque le champ n'est pas cliqué
-              borderSide: const BorderSide(color: Colors.grey, width: 2.0),
+              borderSide: BorderSide(color: widget.isDarkMode ? Colors.grey : const Color.fromARGB(255, 207, 207, 207), width: 2.0),
               borderRadius: BorderRadius.circular(20),
             ),
             focusedBorder: OutlineInputBorder( // Contour lorsque le champ est cliqué
-              borderSide: const BorderSide(color: Color.fromARGB(255, 69, 177, 173), width: 2.0),
+              borderSide:  BorderSide(color: widget.isDarkMode ? const Color.fromARGB(255, 48, 128, 125) : const Color.fromARGB(255, 69, 177, 173), width: 2.0),
               borderRadius: BorderRadius.circular(20),
             ),
           ),
@@ -438,7 +441,7 @@ void showCustomAlertDialog(BuildContext context, TextEditingController controlle
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: const Text('Fermer', style: TextStyle(color: Colors.white)),
+            child: Text('Fermer', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -466,7 +469,7 @@ void showCustomAlertDialog(BuildContext context, TextEditingController controlle
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor:const Color.fromARGB(255, 69, 177, 173),
+              backgroundColor: widget.isDarkMode ? const Color.fromARGB(255, 48, 128, 125) : const Color.fromARGB(255, 69, 177, 173),
             ),
             child: const Text('Modifier', style: TextStyle(color: Colors.white)),
           ),

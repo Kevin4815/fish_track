@@ -1,5 +1,5 @@
 import 'package:fish_track/firebase.dart';
-import 'package:fish_track/sign_up_page.dart';
+import 'package:fish_track/pages/sign_up_page.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 

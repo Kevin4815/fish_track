@@ -1,16 +1,15 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fish_track/app_bar.dart';
-import 'package:fish_track/fish_informations.dart';
+import 'package:fish_track/pages/fish_informations_page.dart';
 import 'package:flutter/material.dart';
 
 class MainAppPage extends StatefulWidget {
-  const MainAppPage({super.key, required this.title, required this.userId});
+  const MainAppPage({super.key, required this.title, required this.userId, required this.isDarkMode});
 
   final String title;
   final String userId;
+  final bool isDarkMode;
 
   @override
   State<MainAppPage> createState() => _MyMainAppPageState();
@@ -30,9 +29,6 @@ class _MyMainAppPageState extends State<MainAppPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Mes pêches',
-      ),
       body: Stack(
         children: [
           // Fond d'image
@@ -46,7 +42,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
           ),
           // Couche semi-transparente
           Container(
-            color: Colors.black.withOpacity(0.4),
+            color: widget.isDarkMode ? Colors.black.withOpacity(0.4) : Colors.white.withOpacity(0.0)
           ),
           // Contenu principal
           Center(
@@ -107,6 +103,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                       'longitude': fishData['position']['longitude']
                                     }
                                   : {'error': 'Inconnue'}, 
+                                  isDarkMode: widget.isDarkMode,
                               ),
                             ),
                           );
@@ -145,7 +142,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
                             padding: const EdgeInsets.all(10.0),
                             margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 20.0),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.8),
+                              color: widget.isDarkMode ? Colors.grey.withOpacity(0.8) : Colors.white.withOpacity(0.8),
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
@@ -163,15 +160,17 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                   child: SizedBox(
                                     width: 80,
                                     height: 80,
-                                    child: fishData['picture'] != null && fishData['picture'].isNotEmpty
-                                      ? Image.file(
-                                          File(fishData['picture']),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Image.asset(
-                                          'images/no_photo.jpg',
-                                          fit: BoxFit.cover,
-                                        ),
+                                    child: fishData['picture'] != null &&
+                                        fishData['picture'].isNotEmpty &&
+                                        File(fishData['picture']).existsSync()
+                                    ? Image.file(
+                                        File(fishData['picture']),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.asset(
+                                        'images/no_photo.jpg',
+                                        fit: BoxFit.cover,
+                                      ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -183,7 +182,7 @@ class _MyMainAppPageState extends State<MainAppPage> {
                                       _buildInfoRow("Type", (fishData['type'] == null || fishData['type'].isEmpty) ? 'Inconnu' : fishData['type']),
                                       _buildInfoRow("Taille", (fishData['size'] == null || fishData['size'].isEmpty) ? 'Inconnu' : fishData['size']),
                                       _buildInfoRow("Canne", (fishData['rod_type'] == null || fishData['rod_type'].isEmpty) ? 'Inconnu' : fishData['rod_type']),
-                                      _buildInfoRow("Lieu", (fishData['position']['city'] == null || fishData['position']['city'].isEmpty) ? 'Inconnu' : fishData['position']['city']),
+                                      _buildInfoRow("Lieu", (fishData['position'] == null || fishData['position']['city'] == null || fishData['position']['city'].isEmpty)? 'Inconnu' : fishData['position']['city']),
                                     ],
                                   ),
                                 ),

@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'package:fish_track/app_bar.dart';
 import 'package:fish_track/fish.dart';
 import 'package:fish_track/location_service.dart';
-import 'package:fish_track/navigationbar.dart';
+import 'package:fish_track/dashboard_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,10 +14,11 @@ const List<String> fishList = <String>['Black-bass', 'Chevesne', 'Brochet', 'Car
 const List<String> fishingRodType = <String>['Ultra-light', 'Light', 'Medium-light', 'Medium', 'Medium-heavy', 'Heavy'];
 
 class AddFishingPage extends StatefulWidget {
-  const AddFishingPage({super.key, required this.title, required this.userId});
+  const AddFishingPage({super.key, required this.title, required this.userId, required this.isDarkMode});
 
   final String title;
   final String userId;
+  final bool isDarkMode;
 
   @override
   State<AddFishingPage> createState() => _MyAddFishingPageState();
@@ -31,6 +31,8 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   final TextEditingController _inputSizeValueController = TextEditingController();
   final LocationService _locationService = LocationService();
   LocationData? _position;
+  bool isSaving = false;
+
 
   @override
   void initState() {
@@ -72,18 +74,19 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
       context: context,
       builder: (BuildContext ctx) {
         return AlertDialog(
-          title: const Text('Choisissez une option'),
+          backgroundColor: widget.isDarkMode ? const Color(0xFF2C3A41) : const Color.fromARGB(255, 255, 255, 255) ,
+          title: Text('Choisissez une option', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Prendre une photo'),
+                leading: Icon(Icons.camera_alt, color: widget.isDarkMode ? Colors.white : Colors.black),
+                title: Text('Prendre une photo', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
                 onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
               ),
               ListTile(
-                leading: const Icon(Icons.photo),
-                title: const Text('Choisir dans la galerie'),
+                leading: Icon(Icons.photo, color: widget.isDarkMode ? Colors.white : Colors.black),
+                title: Text('Choisir dans la galerie', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
                 onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
               ),
             ],
@@ -133,9 +136,6 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Ajout de pêches',
-      ),
       body: Stack(
         children: [
           // Background
@@ -149,17 +149,18 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
           ),
           // Semi-transparent overlay
           Container(
-            color: Colors.black.withOpacity(0.4),
+            color: widget.isDarkMode ? Colors.black.withOpacity(0.4) : Colors.white.withOpacity(0.0)
           ),
           // Main UI
           SingleChildScrollView(
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _buildLabel("Type de poisson"),
+                    const SizedBox(height: 5),
                     _buildDropdownField(
                       dropdownValue: dropdownFishValue,
                       items: fishList,
@@ -167,6 +168,7 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
                     ),
                     const SizedBox(height: 15),
                     _buildLabel("Taille (cm)"),
+                    const SizedBox(height: 5),
                     _buildTextField(
                       controller: _inputSizeValueController,
                       hintText: 'Entrez la taille en cm',
@@ -174,6 +176,7 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
                     ),
                     const SizedBox(height: 15),
                     _buildLabel("Type de canne"),
+                    const SizedBox(height: 5),
                     _buildDropdownField(
                       dropdownValue: dropdownRodValue,
                       items: fishingRodType,
@@ -202,7 +205,18 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
                     _buildButton(
                       text: "Sauvegarder",
                       onPressed: () async {
-                        saveFish(widget.userId);
+                        // Commencer le chargement
+                        setState(() {
+                          isSaving = true;
+                        });
+
+                        // Effectuez l'opération de sauvegarde
+                        await saveFish(widget.userId);
+
+                        // Une fois l'opération terminée, redirigez l'utilisateur
+                        setState(() {
+                          isSaving = false;
+                        });
                       },
                     ),
                   ],
@@ -227,76 +241,104 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
     );
   }
 
-  Widget _buildDropdownField({
-    required String? dropdownValue,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
+  Widget _buildDropdownField({required String? dropdownValue, required List<String> items, required ValueChanged<String?> onChanged}) {
     List<String> dropdownItems = ["Sélectionnez une option", ...items];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: widget.isDarkMode
+            ? const Color.fromARGB(255, 95, 104, 108)
+            : const Color.fromARGB(179, 255, 255, 255),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5)],
       ),
       child: DropdownButtonFormField<String>(
-        decoration: const InputDecoration(border: InputBorder.none),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12),
+        ),
         value: dropdownValue,
         items: dropdownItems.map((String value) {
           return DropdownMenuItem<String>(
             value: value == "Sélectionnez une option" ? null : value,
             child: Text(
               value,
-              style: TextStyle(color: value == "Sélectionnez une option" ? Colors.grey : Colors.black),
+              style: TextStyle(
+                color: widget.isDarkMode
+                    ? (value == "Sélectionnez une option"
+                        ? Colors.grey[500]
+                        : Colors.white)
+                    : (value == "Sélectionnez une option"
+                        ? Colors.black54 
+                        : Colors.black),
+              ),
             ),
           );
         }).toList(),
         onChanged: onChanged,
+        dropdownColor: widget.isDarkMode
+            ? const Color.fromARGB(255, 95, 104, 108)
+            : const Color.fromARGB(255, 255, 255, 255), // Background de la liste déroulée
       ),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    TextInputType? keyboardType,
-  }) {
+
+  Widget _buildTextField({required TextEditingController controller, required String hintText, TextInputType? keyboardType}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: widget.isDarkMode
+            ? const Color.fromARGB(255, 95, 104, 108)
+            : const Color.fromARGB(179, 255, 255, 255),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5)],
       ),
       child: TextFormField(
         controller: controller,
+        style: TextStyle(
+          color: widget.isDarkMode ? Colors.white : Colors.black,
+        ),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey),
+          hintStyle: TextStyle(
+            color: widget.isDarkMode ? Colors.grey : Colors.black54,
+          ),
         ),
         keyboardType: keyboardType,
       ),
     );
   }
 
+
+
+  // Méthode pour afficher un bouton avec texte ou indicateur de chargement
   Widget _buildButton({required String text, required VoidCallback onPressed}) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 69, 177, 173),
+        backgroundColor: widget.isDarkMode ? const Color.fromARGB(255, 48, 128, 125) : const Color.fromARGB(255, 69, 177, 173),
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
+      child: isSaving && text == "Sauvegarder"
+          ? const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            )
+          : Text(
+              text,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
     );
   }
+
+  
 
   Future<void> saveFish(String userId) async {
     CollectionReference fishes = FirebaseFirestore.instance.collection('Fish');
@@ -363,11 +405,13 @@ class _MyAddFishingPageState extends State<AddFishingPage> {
   }
 
   void homeRedirection(BuildContext context, String id) {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => BottomNavigationBarExampleApp(userId: id),
+        builder: (context) => DashboardNavigation(userId: id),
       ),
     );
   }
+
+
 }

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fish_track/app_bar.dart';
 import 'package:fish_track/map_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -9,9 +8,10 @@ import 'package:location/location.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyMapPage extends StatefulWidget {
-  MyMapPage({super.key, required this.title});
+  MyMapPage({super.key, required this.title, required this.isDarkMode});
 
   final String title;
+  final bool isDarkMode;
 
   @override
   State<MyMapPage> createState() => _MyMapPagePageState();
@@ -30,9 +30,9 @@ class _MyMapPagePageState extends State<MyMapPage> {
     mapLocation = MapLocation(); // Initialiser mapLocation
     _fishesPositionsList = fishesList();
 
-     // Récupère la position actuelle
+    // Récupère la position actuelle
     mapLocation.currentPosition((position) {
-      if(mounted){
+      if (mounted) {
         setState(() {
           _position = position;
           print(_position);
@@ -88,9 +88,6 @@ class _MyMapPagePageState extends State<MyMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Mes spots',
-      ),
       body: Builder(
         builder: (context) {
           // Si la position est nulle, afficher un indicateur de chargement en attendant qu'elle soit récupérée
@@ -116,10 +113,14 @@ class _MyMapPagePageState extends State<MyMapPage> {
                     initialZoom: 9.2,
                   ),
                   children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                   TileLayer(
+                      urlTemplate: widget.isDarkMode
+                          ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+                          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: ['a', 'b', 'c'],
                       userAgentPackageName: 'com.example.app',
                     ),
+
                     RichAttributionWidget(
                       attributions: [
                         TextSourceAttribution(

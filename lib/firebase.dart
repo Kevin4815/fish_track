@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fish_track/navigationbar.dart';
-import 'package:fish_track/sign_in_page.dart';
+import 'package:fish_track/dashboard_navigation.dart';
+import 'package:fish_track/pages/sign_in_page.dart';
 import 'package:fish_track/toast.dart';
 import 'package:flutter/material.dart';
 
@@ -20,7 +20,7 @@ class FirebaseManager {
         
         Navigator.push(    
           context,
-          MaterialPageRoute(builder: (context) => BottomNavigationBarExampleApp(userId : uid)),
+          MaterialPageRoute(builder: (context) => DashboardNavigation(userId : uid)),
         );
 
       } on FirebaseAuthException catch (e) {
